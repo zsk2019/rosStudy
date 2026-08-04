@@ -8,11 +8,13 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(mini_robot_interfaces REQUIRED)
 
 add_executable(robot_driver_node src/robot_driver_node.cpp)
+target_include_directories(robot_driver_node PRIVATE include)
 ament_target_dependencies(robot_driver_node
   rclcpp
   std_msgs
@@ -20,11 +22,39 @@ ament_target_dependencies(robot_driver_node
 )
 
 add_executable(robot_monitor_node src/robot_monitor_node.cpp)
+target_include_directories(robot_monitor_node PRIVATE include)
 ament_target_dependencies(robot_monitor_node rclcpp mini_robot_interfaces)
+
+add_executable(robot_mode_client src/robot_mode_client.cpp)
+target_include_directories(robot_mode_client PRIVATE include)
+ament_target_dependencies(robot_mode_client rclcpp mini_robot_interfaces)
+
+add_executable(robot_controller_node src/robot_controller_node.cpp)
+target_include_directories(robot_controller_node PRIVATE include)
+ament_target_dependencies(robot_controller_node
+  rclcpp
+  rclcpp_action
+  mini_robot_interfaces
+)
+
+add_executable(robot_controller_client src/robot_controller_client.cpp)
+target_include_directories(robot_controller_client PRIVATE include)
+ament_target_dependencies(robot_controller_client
+  rclcpp
+  rclcpp_action
+  mini_robot_interfaces
+)
+
+install(DIRECTORY include/
+  DESTINATION include
+)
 
 install(TARGETS
   robot_driver_node
   robot_monitor_node
+  robot_mode_client
+  robot_controller_node
+  robot_controller_client
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,0 +1,13 @@
+string TASK_MOVE_TO_POINT="MOVE_TO_POINT"
+string TASK_PATROL="PATROL"
+string TASK_RETURN_HOME="RETURN_HOME"
+
+string task_name
+int32 target_steps
+---
+bool success
+string message
+---
+int32 current_step
+float32 progress
+string current_state

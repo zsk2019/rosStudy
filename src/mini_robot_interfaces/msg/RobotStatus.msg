@@ -3,6 +3,8 @@ string MODE_IDLE="IDLE"
 string MODE_RUNNING="RUNNING"
 string MODE_CHARGING="CHARGING"
 string MODE_ERROR="ERROR"
+string MODE_AUTO="AUTO"
+string MODE_EMERGENCY="EMERGENCY"
 
 # Time when this status sample was generated.
 builtin_interfaces/Time stamp
