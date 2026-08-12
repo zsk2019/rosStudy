@@ -1,0 +1,8 @@
+robot_driver_node:
+  ros__parameters:
+    robot_id: "mini_robot_01"
+    publish_frequency: 10.0
+    initial_battery: 100.0
+    battery_consumption_rate: 0.1
+    emergency_stop: false
+    max_linear_velocity: 1.5

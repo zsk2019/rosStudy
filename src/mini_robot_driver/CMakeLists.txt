@@ -29,6 +29,9 @@ add_executable(robot_mode_client src/robot_mode_client.cpp)
 target_include_directories(robot_mode_client PRIVATE include)
 ament_target_dependencies(robot_mode_client rclcpp mini_robot_interfaces)
 
+add_executable(robot_thread_test src/robot_thread_test.cpp)
+ament_target_dependencies(robot_thread_test rclcpp mini_robot_interfaces)
+
 add_executable(robot_controller_node src/robot_controller_node.cpp)
 target_include_directories(robot_controller_node PRIVATE include)
 ament_target_dependencies(robot_controller_node
@@ -53,6 +56,7 @@ install(TARGETS
   robot_driver_node
   robot_monitor_node
   robot_mode_client
+  robot_thread_test
   robot_controller_node
   robot_controller_client
   DESTINATION lib/${PROJECT_NAME}
