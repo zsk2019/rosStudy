@@ -13,14 +13,6 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(mini_robot_interfaces REQUIRED)
 
-add_executable(robot_driver_node src/robot_driver_node.cpp)
-target_include_directories(robot_driver_node PRIVATE include)
-ament_target_dependencies(robot_driver_node
-  rclcpp
-  std_msgs
-  mini_robot_interfaces
-)
-
 add_executable(robot_monitor_node src/robot_monitor_node.cpp)
 target_include_directories(robot_monitor_node PRIVATE include)
 ament_target_dependencies(robot_monitor_node rclcpp mini_robot_interfaces)
@@ -32,11 +24,15 @@ ament_target_dependencies(robot_mode_client rclcpp mini_robot_interfaces)
 add_executable(robot_thread_test src/robot_thread_test.cpp)
 ament_target_dependencies(robot_thread_test rclcpp mini_robot_interfaces)
 
-add_executable(robot_controller_node src/robot_controller_node.cpp)
+add_executable(robot_controller_node
+  src/robot_controller_node.cpp
+  src/robot_state_machine.cpp
+)
 target_include_directories(robot_controller_node PRIVATE include)
 ament_target_dependencies(robot_controller_node
   rclcpp
   rclcpp_action
+  std_msgs
   mini_robot_interfaces
 )
 
@@ -53,7 +49,6 @@ install(DIRECTORY include/
 )
 
 install(TARGETS
-  robot_driver_node
   robot_monitor_node
   robot_mode_client
   robot_thread_test
@@ -64,9 +59,11 @@ install(TARGETS
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
+
   # the following line skips cpplint (only works in a git repo)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files

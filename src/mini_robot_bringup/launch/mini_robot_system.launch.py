@@ -18,19 +18,12 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "robot_id",
                 default_value="mini_robot_01",
-                description="Robot identifier used by robot_driver_node",
+                description="Robot identifier used by robot_controller_node",
             ),
             DeclareLaunchArgument(
                 "use_monitor",
                 default_value="true",
                 description="Whether to start robot_monitor_node",
-            ),
-            Node(
-                package="mini_robot_driver",
-                executable="robot_driver_node",
-                name="robot_driver_node",
-                parameters=[robot_driver_config, {"robot_id": robot_id}],
-                output="screen",
             ),
             Node(
                 package="mini_robot_driver",
@@ -43,6 +36,7 @@ def generate_launch_description():
                 package="mini_robot_driver",
                 executable="robot_controller_node",
                 name="robot_controller_node",
+                parameters=[robot_driver_config, {"robot_id": robot_id}],
                 output="screen",
             ),
         ]

@@ -29,10 +29,9 @@
 
 | 程序 | 节点名称 | 说明 |
 | --- | --- | --- |
-| `robot_driver_node` | `/robot_driver_node` | 模拟机器人电量和状态，提供模式设置服务 |
 | `robot_monitor_node` | `/robot_monitor_node` | 订阅机器人状态，根据电量输出正常、警告或错误日志 |
 | `robot_mode_client` | `/robot_mode_client` | 发送一次模式设置请求并输出服务响应 |
-| `robot_controller_node` | `/robot_controller_node` | 执行机器人任务并每秒反馈一步进度 |
+| `robot_controller_node` | `/robot_controller_node` | 模拟机器人电量和状态，提供模式设置服务，并执行机器人任务 |
 | `robot_controller_client` | `/robot_controller_client` | 发送任务、接收反馈和结果，并可在指定步数取消任务 |
 
 ## 通信接口
@@ -41,8 +40,8 @@
 
 | 名称 | 类型 | 发布者/订阅者 | 说明 |
 | --- | --- | --- | --- |
-| `/robot/battery` | `std_msgs/msg/Float32` | 驱动节点发布 | 当前电量百分比 |
-| `/robot/status` | `mini_robot_interfaces/msg/RobotStatus` | 驱动节点发布，监控节点订阅 | 完整机器人状态 |
+| `/robot/battery` | `std_msgs/msg/Float32` | 控制器节点发布 | 当前电量百分比 |
+| `/robot/status` | `mini_robot_interfaces/msg/RobotStatus` | 控制器节点发布，监控节点订阅 | 完整机器人状态 |
 
 ### 服务
 
@@ -70,7 +69,7 @@
 
 目标包含任务名称和总步数；反馈包含当前步数、0～100 的进度百分比和当前状态；结果包含是否成功及说明信息。节点通过 ROS 2 定时器每秒执行一步，同一时刻只执行一个任务。非法任务名称、小于等于 0 的总步数或已有任务正在执行时，新任务会被拒绝。
 
-### 驱动节点参数
+### 控制器节点参数
 
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
@@ -93,10 +92,10 @@ source install/setup.bash
 
 ## 运行示例
 
-分别在不同终端中启动驱动节点和监控节点：
+分别在不同终端中启动控制器节点和监控节点：
 
 ```bash
-ros2 run mini_robot_driver robot_driver_node
+ros2 run mini_robot_driver robot_controller_node
 ```
 
 ```bash
@@ -107,12 +106,6 @@ ros2 run mini_robot_driver robot_monitor_node
 
 ```bash
 ros2 run mini_robot_driver robot_mode_client AUTO
-```
-
-启动任务控制器：
-
-```bash
-ros2 run mini_robot_driver robot_controller_node
 ```
 
 发送一个巡逻任务，并显示每秒返回的进度反馈：
@@ -145,8 +138,8 @@ ros2 service call /robot/set_mode \
 设置和解除急停状态：
 
 ```bash
-ros2 param set /robot_driver_node emergency_stop true
-ros2 param set /robot_driver_node emergency_stop false
+ros2 param set /robot_controller_node emergency_stop true
+ros2 param set /robot_controller_node emergency_stop false
 ```
 
 查看机器人状态：
