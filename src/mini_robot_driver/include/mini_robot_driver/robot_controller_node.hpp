@@ -52,12 +52,9 @@ class RobotControllerNode : public rclcpp::Node {
       mode_service_;
   std::shared_ptr<GoalHandleExecuteTask> active_goal_handle_;
   std::string robot_id_;
-  std::string mode_;
   double publish_frequency_;
   double initial_battery_;
-  double battery_;
   double battery_consumption_rate_;
-  bool emergency_stop_;
   double max_linear_velocity_;
   int32_t current_step_{0};
   bool goal_active_{false};

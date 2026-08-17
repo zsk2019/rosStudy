@@ -15,7 +15,6 @@ RobotControllerNode::RobotControllerNode() : Node("robot_controller_node") {
   using std::placeholders::_2;
 
   robot_id_ = declare_parameter<std::string>("robot_id", "mini_robot_01");
-  mode_ = mini_robot_interfaces::msg::RobotStatus::MODE_IDLE;
   publish_frequency_ = declare_parameter<double>("publish_frequency", 10.0);
 
   rcl_interfaces::msg::ParameterDescriptor battery_descriptor;
@@ -27,10 +26,11 @@ RobotControllerNode::RobotControllerNode() : Node("robot_controller_node") {
   battery_descriptor.floating_point_range = {battery_range};
   initial_battery_ =
       declare_parameter<double>("initial_battery", 100.0, battery_descriptor);
-  battery_ = initial_battery_;
+  state_machine_.setBattery(static_cast<float>(initial_battery_));
   battery_consumption_rate_ =
       declare_parameter<double>("battery_consumption_rate", 0.1);
-  emergency_stop_ = declare_parameter<bool>("emergency_stop", false);
+  state_machine_.setEmergencyStop(
+      declare_parameter<bool>("emergency_stop", false));
 
   rcl_interfaces::msg::ParameterDescriptor velocity_descriptor;
   velocity_descriptor.description = "Maximum linear velocity in m/s";
@@ -74,8 +74,9 @@ RobotControllerNode::RobotControllerNode() : Node("robot_controller_node") {
               "robot_id: %s, publish_frequency: %.1f Hz, "
               "initial_battery: %.1f%%, battery_consumption_rate: %.1f, "
               "max_linear_velocity: %.1f m/s",
-              robot_id_.c_str(), publish_frequency_, battery_,
-              battery_consumption_rate_, max_linear_velocity_);
+              robot_id_.c_str(), publish_frequency_,
+              state_machine_.getBattery(), battery_consumption_rate_,
+              max_linear_velocity_);
   RCLCPP_INFO(get_logger(), "Service /robot/set_mode is ready");
   RCLCPP_INFO(get_logger(), "Action server /robot/execute_task is ready");
 }
@@ -102,6 +103,11 @@ rclcpp_action::GoalResponse RobotControllerNode::handle_goal(
   if (goal->target_steps <= 0) {
     RCLCPP_WARN(get_logger(), "Rejecting task with invalid target_steps: %d",
                 goal->target_steps);
+    return rclcpp_action::GoalResponse::REJECT;
+  }
+  if (!state_machine_.canExecuteTask()) {
+    RCLCPP_WARN(get_logger(),
+                "Rejecting task because robot is not ready to execute tasks");
     return rclcpp_action::GoalResponse::REJECT;
   }
 
@@ -173,16 +179,10 @@ void RobotControllerNode::set_robot_mode(
     const mini_robot_interfaces::srv::SetRobotMode::Request::SharedPtr request,
     mini_robot_interfaces::srv::SetRobotMode::Response::SharedPtr response) {
   const auto& requested_mode = request->mode;
-  const bool valid_mode =
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_IDLE ||
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_RUNNING ||
-      requested_mode ==
-          mini_robot_interfaces::msg::RobotStatus::MODE_CHARGING ||
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_ERROR ||
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_AUTO ||
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_EMERGENCY;
+  const auto requested_robot_mode =
+      RobotStateMachine::fromStatusModeString(requested_mode);
 
-  if (!valid_mode) {
+  if (!requested_robot_mode.has_value()) {
     response->success = false;
     response->message =
         "Invalid mode: " + requested_mode +
@@ -191,27 +191,26 @@ void RobotControllerNode::set_robot_mode(
     return;
   }
 
-  if (emergency_stop_ &&
-      requested_mode !=
-          mini_robot_interfaces::msg::RobotStatus::MODE_EMERGENCY) {
+  if (!state_machine_.setMode(*requested_robot_mode)) {
     response->success = false;
-    response->message =
-        "Emergency stop is active; only EMERGENCY mode is allowed";
+    if (state_machine_.isEmergencyStop() &&
+        *requested_robot_mode != RobotMode::EMERGENCY) {
+      response->message =
+          "Emergency stop is active; only EMERGENCY mode is allowed";
+    } else if (state_machine_.getBattery() < 15.0F &&
+               *requested_robot_mode == RobotMode::AUTO) {
+      response->message = "Battery is below 15%; AUTO mode is not allowed";
+    } else {
+      response->message = "Robot mode transition is not allowed";
+    }
     RCLCPP_WARN(get_logger(), "%s", response->message.c_str());
     return;
   }
 
-  if (battery_ < 15.0 &&
-      requested_mode == mini_robot_interfaces::msg::RobotStatus::MODE_AUTO) {
-    response->success = false;
-    response->message = "Battery is below 15%; AUTO mode is not allowed";
-    RCLCPP_WARN(get_logger(), "%s", response->message.c_str());
-    return;
-  }
-
-  mode_ = requested_mode;
   response->success = true;
-  response->message = "Robot mode set to " + mode_;
+  response->message =
+      "Robot mode set to " +
+      RobotStateMachine::toStatusModeString(state_machine_.getMode());
   RCLCPP_INFO(get_logger(), "%s", response->message.c_str());
 }
 
@@ -222,7 +221,7 @@ RobotControllerNode::on_parameters_changed(
   auto publish_frequency = publish_frequency_;
   auto initial_battery = initial_battery_;
   auto battery_consumption_rate = battery_consumption_rate_;
-  auto emergency_stop = emergency_stop_;
+  auto emergency_stop = state_machine_.isEmergencyStop();
   auto max_linear_velocity = max_linear_velocity_;
   bool reset_battery = false;
 
@@ -272,11 +271,11 @@ RobotControllerNode::on_parameters_changed(
   publish_frequency_ = publish_frequency;
   initial_battery_ = initial_battery;
   battery_consumption_rate_ = battery_consumption_rate;
-  emergency_stop_ = emergency_stop;
   max_linear_velocity_ = max_linear_velocity;
   if (reset_battery) {
-    battery_ = initial_battery_;
+    state_machine_.setBattery(static_cast<float>(initial_battery_));
   }
+  state_machine_.setEmergencyStop(emergency_stop);
   if (frequency_changed) {
     update_status_publish_timer();
   }
@@ -297,27 +296,31 @@ void RobotControllerNode::update_status_publish_timer() {
 }
 
 void RobotControllerNode::publish_robot_status() {
-  battery_ -= battery_consumption_rate_;
-  if (battery_ < 0.0) {
-    battery_ = 0.0;
+  auto battery = state_machine_.getBattery() -
+                 static_cast<float>(battery_consumption_rate_);
+  if (battery < 0.0F) {
+    battery = 0.0F;
   }
+  state_machine_.setBattery(battery);
 
   std_msgs::msg::Float32 battery_message;
-  battery_message.data = static_cast<float>(battery_);
+  battery_message.data = state_machine_.getBattery();
   battery_publisher_->publish(battery_message);
 
   mini_robot_interfaces::msg::RobotStatus status_message;
   status_message.stamp = now();
   status_message.robot_id = robot_id_;
-  status_message.mode = mode_;
-  status_message.battery = static_cast<float>(battery_);
+  status_message.mode =
+      RobotStateMachine::toStatusModeString(state_machine_.getMode());
+  status_message.battery = state_machine_.getBattery();
   status_message.linear_velocity = 0.0F;
   status_message.angular_velocity = 0.0F;
-  status_message.emergency_stop = emergency_stop_;
+  status_message.emergency_stop = state_machine_.isEmergencyStop();
   status_publisher_->publish(status_message);
 
   RCLCPP_INFO(get_logger(), "robot_id: %s\nmode: %s\nbattery: %.1f%%",
-              robot_id_.c_str(), mode_.c_str(), battery_);
+              robot_id_.c_str(), status_message.mode.c_str(),
+              state_machine_.getBattery());
 }
 
 }  // namespace Mrb

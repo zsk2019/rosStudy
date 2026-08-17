@@ -1,17 +1,26 @@
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "mini_robot_interfaces/msg/robot_status.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 namespace Mrb {
 
-enum class RobotMode { IDLE, MANUAL, AUTO, CHARGING, EMERGENCY };
+enum class RobotMode { IDLE, RUNNING, CHARGING, ERROR, AUTO, EMERGENCY };
 
 class RobotStateMachine {
  public:
   RobotStateMachine();
 
+  static std::optional<RobotMode> fromStatusModeString(
+      const std::string& status_mode);
+
+  static std::string toStatusModeString(RobotMode mode);
+
   bool setMode(RobotMode mode);
+
+  bool setModeFromStatusString(const std::string& status_mode);
 
   bool canExecuteTask() const;
 
