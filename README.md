@@ -1,6 +1,6 @@
 # Mini Robot ROS 2 工作空间
 
-这是一个用于学习 ROS 2 节点、话题、参数、自定义消息和服务通信的小型机器人示例工作空间。目前包含 `mini_robot_interfaces` 和 `mini_robot_driver` 两个软件包。
+这是一个用于学习 ROS 2 节点、话题、参数、自定义消息、服务通信和 TF 坐标变换的小型机器人示例工作空间。
 
 ## 软件包
 
@@ -33,6 +33,17 @@
 | `robot_mode_client` | `/robot_mode_client` | 发送一次模式设置请求并输出服务响应 |
 | `robot_controller_node` | `/robot_controller_node` | 模拟机器人电量和状态，提供模式设置服务，并执行机器人任务 |
 | `robot_controller_client` | `/robot_controller_client` | 发送任务、接收反馈和结果，并可在指定步数取消任务 |
+
+### mini_robot_tf
+
+机器人 TF 示例包，发布小车本体、里程计和传感器坐标系。
+
+包含以下可执行程序：
+
+| 程序 | 节点名称 | 说明 |
+| --- | --- | --- |
+| `odom_tf_broadcaster` | `/odom_tf_broadcaster` | 动态发布 `odom -> base_link` 坐标变换 |
+| `sensor_tf_broadcaster` | `/sensor_tf_broadcaster` | 静态发布 `base_link -> laser_link` 和 `base_link -> camera_link` 坐标变换 |
 
 ## 通信接口
 
@@ -86,7 +97,7 @@
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select mini_robot_interfaces mini_robot_driver
+colcon build --packages-select mini_robot_interfaces mini_robot_driver mini_robot_tf
 source install/setup.bash
 ```
 
@@ -148,6 +159,19 @@ ros2 param set /robot_controller_node emergency_stop false
 ros2 topic echo /robot/status
 ```
 
+启动机器人 TF：
+
+```bash
+ros2 launch mini_robot_tf mini_robot_tf.launch.py
+```
+
+查看 TF 树中的坐标变换：
+
+```bash
+ros2 run tf2_ros tf2_echo odom base_link
+ros2 run tf2_ros tf2_echo base_link laser_link
+```
+
 ## 目录结构
 
 ```text
@@ -156,7 +180,10 @@ src/
 │   ├── msg/RobotStatus.msg
 │   ├── srv/SetRobotMode.srv
 │   └── action/ExecuteTask.action
-└── mini_robot_driver/
-    ├── include/mini_robot_driver/
+├── mini_robot_driver/
+│   ├── include/mini_robot_driver/
+│   └── src/
+└── mini_robot_tf/
+    ├── launch/
     └── src/
 ```
