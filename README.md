@@ -45,6 +45,18 @@
 | `odom_tf_broadcaster` | `/odom_tf_broadcaster` | 动态发布 `odom -> base_link` 坐标变换 |
 | `sensor_tf_broadcaster` | `/sensor_tf_broadcaster` | 静态发布 `base_link -> laser_link` 和 `base_link -> camera_link` 坐标变换 |
 
+### mini_robot_urdf
+
+机器人 URDF 模型包，提供小车模型、RViz 配置和显示启动文件。
+
+包含以下资源：
+
+| 文件 | 说明 |
+| --- | --- |
+| `urdf/mini_robot.urdf` | 小车本体、左右轮、万向轮、激光雷达和相机模型 |
+| `launch/display.launch.py` | 启动 `robot_state_publisher` 和 RViz |
+| `rviz/mini_robot.rviz` | 默认 RViz 显示配置 |
+
 ## 通信接口
 
 ### 话题
@@ -97,7 +109,7 @@
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select mini_robot_interfaces mini_robot_driver mini_robot_tf
+colcon build --packages-select mini_robot_interfaces mini_robot_driver mini_robot_tf mini_robot_urdf
 source install/setup.bash
 ```
 
@@ -172,6 +184,12 @@ ros2 run tf2_ros tf2_echo odom base_link
 ros2 run tf2_ros tf2_echo base_link laser_link
 ```
 
+显示机器人 URDF 模型：
+
+```bash
+ros2 launch mini_robot_urdf display.launch.py
+```
+
 ## 目录结构
 
 ```text
@@ -183,7 +201,11 @@ src/
 ├── mini_robot_driver/
 │   ├── include/mini_robot_driver/
 │   └── src/
-└── mini_robot_tf/
+├── mini_robot_tf/
+│   ├── launch/
+│   └── src/
+└── mini_robot_urdf/
     ├── launch/
-    └── src/
+    ├── rviz/
+    └── urdf/
 ```
