@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mini_robot_wheel">
+  <xacro:macro name="wheel" params="prefix x_pos y_pos z_pos wheel_radius wheel_width">
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+      </visual>
+    </link>
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="base_link" />
+      <child link="${prefix}_wheel_link" />
+      <origin xyz="${x_pos} ${y_pos} ${z_pos}" rpy="0 0 0" />
+      <axis xyz="0 1 0" />
+    </joint>
+  </xacro:macro>
+</robot>

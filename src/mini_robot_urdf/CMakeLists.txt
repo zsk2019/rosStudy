@@ -20,6 +20,7 @@ install(TARGETS
 install(DIRECTORY
   launch
   rviz
+  xacro
   urdf
   DESTINATION share/${PROJECT_NAME}
 )
