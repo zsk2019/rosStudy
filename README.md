@@ -33,6 +33,7 @@
 | `robot_mode_client` | `/robot_mode_client` | 发送一次模式设置请求并输出服务响应 |
 | `robot_controller_node` | `/robot_controller_node` | 模拟机器人电量和状态，提供模式设置服务，并执行机器人任务 |
 | `robot_controller_client` | `/robot_controller_client` | 发送任务、接收反馈和结果，并可在指定步数取消任务 |
+| `diff_drive_simulator_node` | `/diff_drive_simulator` | 订阅 `/cmd_vel`，发布轮子 `/joint_states`、`/odom` 和 `odom -> base_link` TF |
 
 ### mini_robot_tf
 
@@ -65,6 +66,9 @@
 | --- | --- | --- | --- |
 | `/robot/battery` | `std_msgs/msg/Float32` | 控制器节点发布 | 当前电量百分比 |
 | `/robot/status` | `mini_robot_interfaces/msg/RobotStatus` | 控制器节点发布，监控节点订阅 | 完整机器人状态 |
+| `/cmd_vel` | `geometry_msgs/msg/Twist` | 差速仿真节点订阅 | 机器人速度指令 |
+| `/joint_states` | `sensor_msgs/msg/JointState` | 差速仿真节点发布 | 左右轮关节位置和速度 |
+| `/odom` | `nav_msgs/msg/Odometry` | 差速仿真节点发布 | 根据速度指令积分得到的里程计 |
 
 ### 服务
 
@@ -102,6 +106,15 @@
 | `battery_consumption_rate` | `0.1` | 每次状态更新减少的电量 |
 | `emergency_stop` | `false` | 急停是否生效 |
 | `max_linear_velocity` | `1.5` | 最大线速度，范围为 0～5 m/s |
+
+### 差速仿真节点参数
+
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `wheel_radius` | `0.05` | 轮子半径，单位 m |
+| `wheel_separation` | `0.44` | 左右轮间距，单位 m |
+| `odom_frame` | `odom` | 里程计坐标系 |
+| `base_frame` | `base_link` | 机器人本体坐标系 |
 
 ## 构建
 
@@ -171,10 +184,29 @@ ros2 param set /robot_controller_node emergency_stop false
 ros2 topic echo /robot/status
 ```
 
-启动机器人 TF：
+启动传感器 TF：
 
 ```bash
 ros2 launch mini_robot_tf mini_robot_tf.launch.py
+```
+
+如需单独运行动态 `odom -> base_link` TF 示例，可显式开启：
+
+```bash
+ros2 launch mini_robot_tf mini_robot_tf.launch.py use_odom_tf_broadcaster:=true
+```
+
+启动差速仿真并发布里程计：
+
+```bash
+ros2 run mini_robot_driver diff_drive_simulator_node
+```
+
+发送速度指令：
+
+```bash
+ros2 topic pub /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.2}, angular: {z: 0.4}}" -r 10
 ```
 
 查看 TF 树中的坐标变换：

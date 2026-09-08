@@ -11,6 +11,9 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(mini_robot_interfaces REQUIRED)
 
 add_executable(robot_monitor_node src/robot_monitor_node.cpp)
@@ -28,6 +31,7 @@ add_executable(robot_controller_node
   src/robot_controller_node.cpp
   src/robot_state_machine.cpp
 )
+
 target_include_directories(robot_controller_node PRIVATE include)
 ament_target_dependencies(robot_controller_node
   rclcpp
@@ -44,8 +48,35 @@ ament_target_dependencies(robot_controller_client
   mini_robot_interfaces
 )
 
+add_executable(diff_drive_simulator_node src/diff_drive_simulator_node.cpp)
+ament_target_dependencies(diff_drive_simulator_node
+  rclcpp
+  geometry_msgs
+  sensor_msgs
+)
+
+add_executable(wheel_encoder_simulator_node
+  src/wheel_encoder_simulator_node.cpp
+)
+ament_target_dependencies(wheel_encoder_simulator_node
+  rclcpp
+  sensor_msgs
+)
+
+add_executable(wheel_odometry src/wheel_odometry.cpp)
+ament_target_dependencies(wheel_odometry
+  rclcpp
+  sensor_msgs
+  nav_msgs
+  tf2_ros
+)
+
 install(DIRECTORY include/
   DESTINATION include
+)
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(TARGETS
@@ -54,6 +85,9 @@ install(TARGETS
   robot_thread_test
   robot_controller_node
   robot_controller_client
+  diff_drive_simulator_node
+  wheel_encoder_simulator_node
+  wheel_odometry
   DESTINATION lib/${PROJECT_NAME}
 )
 

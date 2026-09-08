@@ -7,7 +7,6 @@
   <xacro:property name="base_height" value="0.2" />
   <xacro:property name="wheel_radius" value="0.05" />
   <xacro:property name="wheel_width" value="0.04" />
-  <xacro:property name="wheel_x" value="${base_length / 2 - wheel_radius}" />
   <xacro:property name="wheel_y" value="${base_width / 2 + wheel_width / 2}" />
   <xacro:property name="wheel_z" value="${-base_height / 2}" />
   <link name="base_footprint" />
@@ -30,13 +29,9 @@
     </visual>
   </link>
 
-  <xacro:wheel prefix="front_left" x_pos="${wheel_x}" y_pos="${wheel_y}" z_pos="${wheel_z}"
+  <xacro:wheel prefix="left" x_pos="0" y_pos="${wheel_y}" z_pos="${wheel_z}"
     wheel_radius="${wheel_radius}" wheel_width="${wheel_width}" />
-  <xacro:wheel prefix="front_right" x_pos="${wheel_x}" y_pos="${-wheel_y}" z_pos="${wheel_z}"
-    wheel_radius="${wheel_radius}" wheel_width="${wheel_width}" />
-  <xacro:wheel prefix="rear_left" x_pos="${-wheel_x}" y_pos="${wheel_y}" z_pos="${wheel_z}"
-    wheel_radius="${wheel_radius}" wheel_width="${wheel_width}" />
-  <xacro:wheel prefix="rear_right" x_pos="${-wheel_x}" y_pos="${-wheel_y}" z_pos="${wheel_z}"
+  <xacro:wheel prefix="right" x_pos="0" y_pos="${-wheel_y}" z_pos="${wheel_z}"
     wheel_radius="${wheel_radius}" wheel_width="${wheel_width}" />
 
 
