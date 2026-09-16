@@ -19,6 +19,10 @@
   <depend>mini_robot_interfaces</depend>
 
   <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>hardware_interface</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>mini_robot_urdf</exec_depend>

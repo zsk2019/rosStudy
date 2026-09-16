@@ -34,10 +34,7 @@
   <xacro:wheel prefix="right" x_pos="0" y_pos="${-wheel_y}" z_pos="${wheel_z}"
     wheel_radius="${wheel_radius}" wheel_width="${wheel_width}" />
 
-  <ros2_control
-    name="MiniRobotSystem"
-    type="system">
-
+  <ros2_control name="MiniRobotSystem" type="system">
     <hardware>
       <plugin>mock_components/GenericSystem</plugin>
       <param name="calculate_dynamics">true</param>
@@ -56,6 +53,5 @@
     </joint>
 
   </ros2_control>
-
 
 </robot>
