@@ -22,7 +22,9 @@ diff_drive_controller:
 
     odom_frame_id: odom
 
-    base_frame_id: base_link
+    # Keep the TF tree single-parented:
+    # odom -> base_footprint -> base_link -> wheel links.
+    base_frame_id: base_footprint
 
     enable_odom_tf: true
 
